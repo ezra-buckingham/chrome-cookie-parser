@@ -1,13 +1,30 @@
+import click
 import json
 from pathlib import Path
 
-def main():
 
-  chrome_cookies_file = Path('test')
-  chrome_cookies = chrome_cookies_file.read_text()
-
-  chrome_cookies = chrome_cookies.splitlines()
-
+@click.command()
+@click.option('-i', '--input', required=False, default='/dev/null/doesnotexist', type=Path, help='''
+  Input file for the cookies (defaults to STDIN if this left blank)
+''')
+@click.option('-o', '--output', required=False, default=None, type=Path, help='''
+  Output file for the cookies (defaults to STDOUT if this left blank)
+''')
+def main(input, output):
+  """Parse a copy and pasted version of an application's cookies to JSON for import
+  """
+  
+  # Cast input to a path
+  input = Path(input)
+  
+  # Check if input exists
+  if input.exists():
+    chrome_cookies_input = input.read_text()
+  else:
+    chrome_cookies_input = click.prompt('Please paste your cookies now')
+  
+  # Begin parsing the cookies
+  chrome_cookies = chrome_cookies_input.splitlines()
   chrome_cookies_list = []
 
   for line in chrome_cookies:
@@ -43,10 +60,17 @@ def main():
 
     chrome_cookies_list.append(cookies)
 
-
-  parsed_chrome_cookies = Path('test_cookies')
+  # Parse the cookies to JSON
   cookies_json = json.dumps(chrome_cookies_list)
-  parsed_chrome_cookies.write_text(cookies_json)
+
+  if output:
+    parsed_chrome_cookies = Path(output)
+    parsed_chrome_cookies.write_text(cookies_json)
+    print(f'Cookies written to { str(parsed_chrome_cookies.absolute()) }')
+  else:
+    print(cookies_json)
+    
+  
 
 if __name__ == '__main__':
   main()
